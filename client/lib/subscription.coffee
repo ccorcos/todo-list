@@ -1,18 +1,4 @@
 
-# Call the func after some number of ms unless canceled.
-# when canceled, the function will run if the func has been run
-# thus und
-callDelayUndoCancel = (ms, func) ->
-  called = false
-  id = Meteor.setTimeout(->
-    called = true
-    func()
-  , ms)
-  (f) -> 
-    if called
-      f()
-    else
-      Meteor.clearTimeout(id)
 
 insertBeforeWhere = (insert, where, list) ->
   inserted = false
@@ -47,8 +33,10 @@ observeChanges = (cursor, callbacks) ->
   return handle
 
 
+callMethod = R.curry (name, obj) ->
+  obj[name]?()
 
-# calls startLoading, stopLoading, intial, added, changed, removed, subscribe, cursor, onReset, onStart, onStop
+# calls startLoading, stopLoading, subscribe, cursors: cursor, intial, added, changed, removed, onReset, onStart, onStop
 class Subscription
   constructor: (obj) ->
     _.extend(this, obj,{
@@ -58,27 +46,24 @@ class Subscription
   reset: ->
     @stopHandles()
     @onReset?()
-    if @cursors?.length then R.map(R.invoke('onReset', []), @cursors)
+    R.map(callMethod('onReset'), @cursors)
   stopHandles: ->
     R.map(R.invoke('stop', []), @handles)
     @handles = []
   stop: ->
     @timeout = Meteor.setTimeout(@reset.bind(this), 1000*60*2)
     @onStop?()
-    if @cursors?.length then R.map(R.invoke('onStop', []), @cursors)
+    R.map(callMethod('onStop'), @cursors)
   start: ->
     @onStart?()
-    if @cursors?.length then R.map(R.invoke('onStart', []), @cursors)
+    R.map(callMethod('onStart'), @cursors)
     Meteor.clearTimeout(@timeout)
     undo = callDelayUndoCancel(100, @startLoading)
     # subscribe to data from the server
     @handles.push @subscribe =>
       undo(@stopLoading)
       # reactively watch for events and animate the UI accordingly
-      if @cursor
-        @handles.push observeChanges(@cursor(), R.pick(['initial', 'added', 'changed', 'removed'], this))
-      else if @cursors
-        for cursor in @cursors
-          @handles.push observeChanges(cursor.cursor(), R.pick(['initial', 'added', 'changed', 'removed'], cursor))
+      for cursor in @cursors
+        @handles.push observeChanges(cursor.cursor(), R.pick(['initial', 'added', 'changed', 'removed'], cursor))
 
 _.extend(this, {insertBeforeWhere, Subscription})

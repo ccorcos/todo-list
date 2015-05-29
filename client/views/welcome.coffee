@@ -194,6 +194,7 @@ app.controller.welcome =
       )
 
     animation = (done) ->
+      console.log "start loading"
       updateState({
         route: 'welcome'
         welcome:
@@ -215,13 +216,20 @@ app.controller.welcome =
           scene: 'login'
           error: errMsg
       })
-      animate ['welcome.loading'], 'transition.fadeOut', {}, ->
-        render ->
-          animate([
-            'welcome.username'
-            'welcome.password'
-            'welcome.error'
-          ], 'transition.fadeIn', {}, done)
+      if app.state.welcome.isLoading
+        animate ['welcome.loading'], 'transition.fadeOut', {}, ->
+          render ->
+            animate([
+              'welcome.username'
+              'welcome.password'
+              'welcome.error'
+            ], 'transition.fadeIn', {}, done)
+      else
+        animate ['welcome.error'], 'transition.fadeOut', {}, ->
+          render ->
+            animate([
+              'welcome.error'
+            ], 'transition.fadeIn', {}, done)
 
     enqueueAnimation('welcome', animation)
 
@@ -233,15 +241,22 @@ app.controller.welcome =
           scene: 'signup'
           error: errMsg
       })
-      animate ['welcome.loading'], 'transition.fadeOut', {}, ->
-        render ->
-          animate([
-            'welcome.username'
-            'welcome.email'
-            'welcome.password'
-            'welcome.verify'
-            'welcome.error'
-          ], 'transition.fadeIn', {}, done)
+      if app.state.welcome.isLoading
+        animate ['welcome.loading'], 'transition.fadeOut', {}, ->
+          render ->
+            animate([
+              'welcome.username'
+              'welcome.email'
+              'welcome.password'
+              'welcome.verify'
+              'welcome.error'
+            ], 'transition.fadeIn', {}, done)
+      else
+        animate ['welcome.error'], 'transition.fadeOut', {}, ->
+          render ->
+            animate([
+              'welcome.error'
+            ], 'transition.fadeIn', {}, done)
 
     enqueueAnimation('welcome', animation)
 
@@ -287,9 +302,9 @@ app.controller.welcome =
       @errorSegue("Passwords don't match")
       return
 
-    @startLoading()
-
+    undo = callDelayUndoCancel(1000, @startLoading.bind(this))
     Accounts.createUser {username: username, password: password, email: email}, (err) =>
+      undo()
       if err
         @segueSignupFail(err.reason)
       else
@@ -300,9 +315,9 @@ app.controller.welcome =
       @errorSegue("What's you password?")
       return
 
-    @startLoading()
-
+    undo = callDelayUndoCancel(1000, @startLoading.bind(this))
     Meteor.loginWithPassword username, password, (err) =>
+      undo()
       if err
         @segueLoginFail(err.reason)
       else

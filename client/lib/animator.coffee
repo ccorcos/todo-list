@@ -35,9 +35,15 @@ enqueue = (animation, func, data) ->
 # run and drop the firt queued animation
 dequeue = (animation, state) ->
   nextFunc = R.head(state[animation].queue)
-  if nextFunc then startAnimation(animation, nextFunc)
-  newQueue = R.tail(state[animation].queue)
-  R.assocPath([animation, 'queue'], newQueue, state)
+  if nextFunc 
+    state[animation].busy = true
+    startAnimation(animation, nextFunc)
+    newQueue = R.tail(state[animation].queue)
+    return R.assocPath([animation, 'queue'], newQueue, state)
+  else
+    state[animateion].busy = true
+    return state
+  
 
 # drop the action if an animation is busy
 dropOn = R.curry (busyAnimation, animation, {action, state}) ->
@@ -66,12 +72,15 @@ queueAllOn = R.curry (busyAnimation, animation, {action, state}) ->
 
 animations = [
   'welcome'
-  'feed'
   'appear'
   'transition'
+  'lists'
 ]
 
+# handleAction = queueAllOn('appear', 'lists')
+
 handleAction = R.identity
+
 
 initAnimState = R.flip(R.assoc(R.__, {busy:false, next:null, queue:[]}, R.__))
 initialState = R.reduce(initAnimState, {}, animations)
@@ -107,7 +116,10 @@ flyd.scan ((state, action) ->
     state = R.assocPath([animation, 'busy'], true, state)
   else if action.type is 'end'
     {animation} = action
-    state = R.assocPath([animation, 'busy'], false, state)
+    if state[animation].queue.length > 0
+      state = dequeue(animation, state)
+    else
+      state = R.assocPath([animation, 'busy'], false, state)
 
   return state
 ), initialState, animation$

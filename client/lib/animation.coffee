@@ -18,8 +18,14 @@ $refs = R.compose($, lookupDOMNodes)
 
 # animate refs using $.velocity
 animate = R.curry (refNames, transition, options, complete) ->
+  unless _.isFunction(complete)
+    console.warn "animation with no callback", arguments
   options = R.merge({display:null, complete}, options)
-  $refs(refNames).velocity(transition, options)
+  $elements = $refs(refNames)
+  if $elements.length > 0
+    $elements.velocity(transition, options)
+  else
+    complete()
 
 
 nthCallOf = (nth, func) ->

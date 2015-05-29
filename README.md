@@ -6,11 +6,9 @@ Every React view ought to be pure. There is a global `app.state` which is used t
 
 # To Do
 
--subscription cursors array by default. start/doneLoading not in the cursor. all callbacks are optional
--animate lists in.
--list-item component
--item component
+-list subscription and rendering without animation.
 -list hero animation - animate textAlign center? animate fontSize?
+-animation queuing
 -newList
 -newItem
 -deleteList

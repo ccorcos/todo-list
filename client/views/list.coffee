@@ -1,3 +1,19 @@
+# the feed page. just a list of events
+app.views.item = React.createClassFactory
+  displayName: 'Item'
+  mixins: [
+    React.addons.PureRenderMixin
+  ]
+  propTypes:
+    item: React.PropTypes.object.isRequired
+  
+  render: ->
+    (div {
+        className: 'list-item', 
+      },
+      (div {className: 'title', ref:'title'}, this.props.item.title)
+      (input {type: 'checkbox', ref:'checked', checked:this.props.item.checked})
+    )
 
 # the feed page. just a list of events
 app.views.list = React.createClassFactory
@@ -12,21 +28,15 @@ app.views.list = React.createClassFactory
     items: React.PropTypes.array.isRequired
   
   renderItem: (item) ->
-    (div {
-        className: 'list-item', 
-        key: item._id, 
-        ref: item._id
-      },
-      (div {className: 'title', ref:'title'}, item.title)
-      (input {type: 'checkbox', ref:'checked', checked:item.checked})
-    )
+    {item} = app.views
+    (item {item})
 
   render: ->
     {div} = React.DOM
     
     (div {className: 'body'},
       (div {className: 'header', ref: 'header'},
-        (div {className: 'left back', onClick: app.controller.list.segueToLists})
+        (div {className: 'left back', onClick: app.controller.list.segueToLists}, "back")
         (div {className: 'title'}, this.props.list.title)
       )
       R.map(@renderItem, @props.items)
@@ -44,19 +54,19 @@ createListSubscription = (listId) ->
   new Subscription 
     subscribe: (onReady) ->
       Meteor.subscribe('list', onReady)
+    startLoading: ->
+      enqueueAnimation 'list', (done) ->
+        updateState({list: {isLoading: true}})
+        render ->
+          animate ['list.loading'], 'transition.fadeIn', done
+    stopLoading: ->
+      enqueueAnimation 'list', (done) ->
+        updateState({list: {isLoading: false}})
+        render ->
+          animate ['list.loading'], 'transition.fadeOut', done  
     cursors: [{
       cursor: ->
         Items.find({listId}, {sort: {title: -1}})
-      startLoading: ->
-        enqueueAnimation 'list', (done) ->
-          updateState({list: {isLoading: true}})
-          render ->
-            animate ['list.loading'], 'transition.fadeIn', done
-      stopLoading: ->
-        enqueueAnimation 'list', (done) ->
-          updateState({list: {isLoading: false}})
-          render ->
-            animate ['list.loading'], 'transition.fadeOut', done  
       initial: (items) ->
         # animate initial events in
         enqueueAnimation 'list', (done) ->
@@ -95,8 +105,6 @@ createListSubscription = (listId) ->
     }, {
       cursor: ->
         Lists.find(listId)
-      startLoading: ->
-      stopLoading: ->
       initial: ([list]) ->
         # animate initial events in
         enqueueAnimation 'list', (done) ->
@@ -136,13 +144,13 @@ app.subscriptions.list = {
   cache: {}
   current: null
   start: (listId) ->
-    sub = cache[listId]
+    sub = @cache[listId]
     if sub
       sub.start()
       @current = sub
     else
       sub = createListSubscription(listId)
-      cache[listId] = sub
+      @cache[listId] = sub
       @current = sub
   stop: ->
     @current?.stop?()
@@ -153,6 +161,8 @@ app.subscriptions.list = {
     @current = null
 }
 
+# initial state
+updateState({list:{isLoading:false, list:{}, items:[]}})
   
 app.animations.list = {
   appear: R.curry (listId, done) ->
