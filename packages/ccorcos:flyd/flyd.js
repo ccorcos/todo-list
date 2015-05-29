@@ -1,4 +1,4 @@
-var MeteorWrapperObj = {};
+var wrapperObj = {};
 
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 var flyd = require('flyd');
@@ -518,19 +518,18 @@ return {
 flyd = require('flyd')
 flyd.filter = require('flyd-filter')
 flyd.lift = require('flyd-lift')
-flyd.flatmap = require('flyd-flatmap')
+flyd.flatMap = require('flyd-flatmap')
 // flyd.switchlatest = require('flyd-switchlatest')
-flyd.keepwhen = require('flyd-keepwhen')
+flyd.keepWhen = require('flyd-keepwhen')
 flyd.obj = require('flyd-obj')
-flyd.sampleon = require('flyd-sampleon')
-flyd.scanmerge = require('flyd-scanmerge')
-flyd.takeuntil = require('flyd-takeuntil')
-flyd.forwardto = require('flyd-forwardto')
-flyd.aftersilence = require('flyd-aftersilence')
+flyd.sampleOn = require('flyd-sampleon')
+flyd.scanMerge = require('flyd-scanmerge')
+flyd.takeUntil = require('flyd-takeuntil')
+flyd.forwardTo = require('flyd-forwardto')
+flyd.afterSilence = require('flyd-aftersilence')
 // flyd.every = require('flyd-every')
-flyd.inlast = require('flyd-inlast')
-MeteorWrapperObj.flyd = flyd;
-
+flyd.inLast = require('flyd-inlast')
+wrapperObj.flyd = flyd;
 },{"flyd":12,"flyd-aftersilence":1,"flyd-filter":2,"flyd-flatmap":3,"flyd-forwardto":4,"flyd-inlast":5,"flyd-keepwhen":6,"flyd-lift":7,"flyd-obj":8,"flyd-sampleon":9,"flyd-scanmerge":10,"flyd-takeuntil":11}]},{},[13]);
 
-this.flyd = MeteorWrapperObj.flyd;
+this.flyd = wrapperObj.flyd

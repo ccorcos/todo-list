@@ -1,3 +1,8 @@
+strangle = (x, maxMin) ->
+  x = Math.max(x, maxMin[0])
+  x = Math.min(x , maxMin[1])
+  return x
+
 # the feed page. just a list of events
 app.views.item = React.createClassFactory
   displayName: 'Item'
@@ -7,11 +12,44 @@ app.views.item = React.createClassFactory
   propTypes:
     item: React.PropTypes.object.isRequired
   
+  componentWillMount: ->
+    @starts = flyd.stream()
+    @moves = flyd.stream()
+    @ends = flyd.stream()
+
+    drag = (x) =>
+      console.log "x", x
+      initLeft = $(@getDOMNode()).position().left
+      offset = initLeft - x
+      lastLeft = initLeft
+      velocity = 0
+      {initLeft, offset, lastLeft, velocity}
+      
+    flyd.map(drag, @starts)
+
+    # flyd.map((x) ->
+    #     console.log "move", x
+    #     left = strangle(x + offset, [-menuWidth, 0])
+    #     velocity = left - lastLeft
+    #     lastLeft = left
+    #     $(@getDOMNode()).velocity({translateX: left, translateZ: 0}, {duration: 0})
+    # , flyd.takeUntil(@ends, @moves))
+
+
+
+  componentWillUnmount: ->
+    @starts.end(true)
+    @moves.end(true)
+    @ends.end(true)
+
   render: ->
     {div, input} = React.DOM
 
     (div {
         className: 'list-item', 
+        onMouseDown: R.compose(@starts, R.prop('pageX'))
+        onMouseMove: R.compose(@moves, R.prop('pageX'))
+        onMouseUp:   R.compose(@ends, R.prop('pageX'))
       },
       (div {className: 'title', ref:'title'}, this.props.item.title)
       (input {
@@ -35,6 +73,7 @@ app.views.list = React.createClassFactory
     isLoading: React.PropTypes.bool.isRequired
     list: React.PropTypes.object.isRequired
     items: React.PropTypes.array.isRequired
+
   
   getInitialState: ->
     newItem: ''
