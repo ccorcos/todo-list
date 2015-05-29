@@ -1,0 +1,11 @@
+{
+  "name": "",
+  "version": "",
+  "description": "",
+  "author": "Chet Corcos <ccorcos@gmail.com> (http://www.chetcorcos.com/)",
+  "license": "MIT",
+  "dependencies": {
+    "ramda": "latest"
+  }
+}
+
