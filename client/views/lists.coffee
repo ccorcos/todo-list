@@ -1,5 +1,5 @@
 
-# the feed page. just a list of events
+# the lists page. just a list of events
 app.views.lists = React.createClassFactory
   displayName: 'Lists'
   mixins: [
@@ -10,6 +10,7 @@ app.views.lists = React.createClassFactory
     isLoading: React.PropTypes.bool.isRequired
     lists: React.PropTypes.array.isRequired
   renderList: (list) ->
+    {div} = React.DOM
     (div {
         className: 'list-item', 
         key: list._id, 
@@ -24,9 +25,9 @@ app.views.lists = React.createClassFactory
     
     (div {className: 'body'},
       (div {className: 'header', ref: 'header'},
-        (div {className: 'left logout', onClick: app.controller.lists.segueToLogout})
+        (div {className: 'left logout', onClick: app.controller.lists.segueToLogout}, "logout")
         (div {className: 'title'}, "Todo Lists")
-        (div {className: 'right new-list', onClick: app.controller.lists.segueToNewList})
+        (div {className: 'right new-list', onClick: app.controller.lists.segueToNewList}, "new list")
       )
       R.map(@renderList, @props.lists)
       do =>
@@ -52,17 +53,17 @@ app.subscriptions.lists = new Subscription {
     enqueueAnimation 'lists', (done) ->
       updateState({lists: {isLoading: true}})
       render ->
-        animate ['feed.loading'], 'transition.fadeIn', done
+        animate ['lists.loading'], 'transition.fadeIn', done
   stopLoading: ->
     enqueueAnimation 'lists', (done) ->
       updateState({lists: {isLoading: false}})
       render ->
-        animate ['feed.loading'], 'transition.fadeOut', done  
+        animate ['lists.loading'], 'transition.fadeOut', done  
   initial: (lists) ->
     # animate initial events in
     enqueueAnimation 'lists', (done) ->
       # only animate in the new events
-      newLists = R.difference(lists, app.state.feed.lists)
+      newLists = R.difference(lists, app.state.lists.lists)
       updateState({lists: {lists: lists}})
       render ->
         animate(listsRefs(newLists), 'transition.slideUpIn', done)
@@ -101,14 +102,14 @@ app.subscriptions.lists = new Subscription {
 }
 
 # initial state
-updateState({lists:{isLoading:false, events:[]}})
+updateState({lists:{isLoading:false, lists:[]}})
 
 app.animations.lists = {
   appear: (done) ->
     app.subscriptions.lists.start()
-      updateState({route:'lists', lists:{isLoading:false}})
-      render ->
-        animate(['lists.header'], 'transition.slideDownIn', {}, done)
+    updateState({route:'lists', lists:{isLoading:false}})
+    render ->
+      animate(['lists.header'], 'transition.slideDownIn', {}, done)
 }
 
 app.controller.lists = {
@@ -119,6 +120,7 @@ app.controller.lists = {
     enqueueAnimation 'transition', (done) ->
       # stop all subscription now
       R.map(R.invoke('reset', []), app.subscriptions)
+      Meteor.logout()
       animate ['lists'], 'transition.fadeOut', {}, ->
         app.animations.welcome.appear(done)
 

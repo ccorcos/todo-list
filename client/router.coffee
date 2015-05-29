@@ -3,15 +3,30 @@
 # so you can copy paste and get to the same place.
 start = R.once(R.call)
 
+loginRequired = (path, next) ->
+  if Meteor.userId()
+    next()
+  else
+    next('/welcome')
+
+logoutRequired = (path, next) ->
+  if Meteor.userId()
+    next('/')
+  else
+    next()
+
 FlowRouter.route '/welcome', 
+  middlewares: [logoutRequired]
   action: (params, queryParams) ->
     start -> app.controller.welcome.appear()
 
 FlowRouter.route '/', 
+  middlewares: [loginRequired]
   action: (params, queryParams) ->
     start -> app.controller.lists.appear()
 
 FlowRouter.route '/list/:_id', 
+  middlewares: [loginRequired]
   action: (params, queryParams) ->
     start -> app.controller.list.appear(params._id)
 

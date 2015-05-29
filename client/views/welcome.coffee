@@ -251,21 +251,21 @@ app.controller.welcome =
     animateOut = (next) ->
       animate(['welcome.error'], 'transition.fadeOut', {}, next)
     animation = (done) ->
-      if errMsg is state.welcome.error
+      if errMsg is app.state.welcome.error
         done()
       else
         updateState({
           welcome:
             error: errMsg
         })
-        if state.welcome.error and errMsg
+        if app.state.welcome.error and errMsg
           animateOut ->
             render ->
               animateIn(done)
-        else if state.welcome.error and not errMsg
+        else if app.state.welcome.error and not errMsg
           animateOut ->
             render(done)
-        else if not state.welcome.error and errMsg
+        else if not app.state.welcome.error and errMsg
           render ->
             animateIn(done)
         else

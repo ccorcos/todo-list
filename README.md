@@ -5,7 +5,12 @@ The goal of this project is to use Meteor, React, and VelocityJS to create an en
 
 # To Do
 
-list hero animation
+subscription cursors by default. start/doneLoading not in the cursor. all callbacks are optional
+
+animate lists in.
+list-item component
+item component
+list hero animation - animate textAlign center? animate fontSize?
 
 pages:
 newList

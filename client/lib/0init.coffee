@@ -1,4 +1,4 @@
-_ = lodash
+@_ = lodash
 
 # Initialize React to respond to touch events
 React.initializeTouchEvents(true)

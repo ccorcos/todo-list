@@ -16,7 +16,7 @@ callDelayUndoCancel = (ms, func) ->
 
 insertBeforeWhere = (insert, where, list) ->
   inserted = false
-  newList = R.reduce((acc,item) ->
+  newList = R.reduce( ((acc,item) ->
     if where(item)
       inserted = true
       return R.concat(acc, [insert, item])
@@ -58,17 +58,17 @@ class Subscription
   reset: ->
     @stopHandles()
     @onReset?()
-    R.map(R.invoke('onReset', []), @cursors)
+    if @cursors?.length then R.map(R.invoke('onReset', []), @cursors)
   stopHandles: ->
     R.map(R.invoke('stop', []), @handles)
     @handles = []
   stop: ->
     @timeout = Meteor.setTimeout(@reset.bind(this), 1000*60*2)
     @onStop?()
-    R.map(R.invoke('onStop', []), @cursors)
+    if @cursors?.length then R.map(R.invoke('onStop', []), @cursors)
   start: ->
     @onStart?()
-    R.map(R.invoke('onStart', []), @cursors)
+    if @cursors?.length then R.map(R.invoke('onStart', []), @cursors)
     Meteor.clearTimeout(@timeout)
     undo = callDelayUndoCancel(100, @startLoading)
     # subscribe to data from the server

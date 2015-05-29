@@ -1,11 +1,11 @@
 
 App = React.createClassFactory
   displayName: 'App'
-  mixins: [React.addons.PureRenderMixin]
+  mixins: [] # not pure because app.state is mutable
   render: ->
     route = this.props.route
     view = app.views[route]
-    props = app.state.[route]
+    props = app.state[route]
     view(props)
 
 render = (done) ->
@@ -35,7 +35,7 @@ evolve = (dest, obj) ->
     else
       dest[k] = v
 
-evolveState = R.curry(extend)(app.state)
+evolveState = R.curry(evolve)(app.state)
 
 evolveWhere = R.curry (where, evolve, list) ->
   R.map(R.cond([
