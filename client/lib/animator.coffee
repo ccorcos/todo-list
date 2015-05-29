@@ -21,8 +21,8 @@ startNext = (animation, state) ->
   nextFunc = state[animation].next
   if nextFunc
     startAnimation(animation, nextFunc)
-    R.compose(R.assocPath([animation, 'next'], null),
-              R.assocPath([animation, 'busy'], true))(state)
+    state[animation].busy += 1
+    R.assocPath([animation, 'next'], null)(state)
   else
     state
 
@@ -36,12 +36,11 @@ enqueue = (animation, func, data) ->
 dequeue = (animation, state) ->
   nextFunc = R.head(state[animation].queue)
   if nextFunc 
-    state[animation].busy = true
+    state[animation].busy += 1
     startAnimation(animation, nextFunc)
     newQueue = R.tail(state[animation].queue)
     return R.assocPath([animation, 'queue'], newQueue, state)
   else
-    state[animateion].busy = true
     return state
   
 
@@ -70,25 +69,29 @@ queueAllOn = R.curry (busyAnimation, animation, {action, state}) ->
   else
     {action, state}
 
-animations = [
-  'welcome'
-  'appear'
-  'transition'
-  'lists'
-]
-
-# handleAction = queueAllOn('appear', 'lists')
-
-handleAction = R.identity
 
 
-initAnimState = R.flip(R.assoc(R.__, {busy:false, next:null, queue:[]}, R.__))
-initialState = R.reduce(initAnimState, {}, animations)
+initialize = R.assoc(R.__, {busy:0, next:null, queue:[]}, R.__)
+initializeAnimationState = ({action, state}) ->
+  if action.animation of state
+    return {action, state}
+  else
+    return R.evolve({state:initialize(action.animation)}, {action, state})
+
+log = (value) ->
+  console.log(value)
+  return value
+
+handleAction = R.compose(
+  R.identity
+  log
+  initializeAnimationState
+)
 
 ###
 state = {
   animation: {
-    busy: true or false
+    busy: 0
     next: func or null
     queue: [] or [func, ...]
   }
@@ -113,16 +116,16 @@ flyd.scan ((state, action) ->
   if action.type is 'begin'
     {func, animation} = action
     startAnimation(animation, func)
-    state = R.assocPath([animation, 'busy'], true, state)
+    state[animation].busy += 1
+    # state = R.assocPath([animation, 'busy'], true, state)
   else if action.type is 'end'
     {animation} = action
-    if state[animation].queue.length > 0
-      state = dequeue(animation, state)
-    else
-      state = R.assocPath([animation, 'busy'], false, state)
+    state[animation].busy -= 1
+    state = dequeue(animation, state)
+    # state = R.assocPath([animation, 'busy'], false, state)
 
   return state
-), initialState, animation$
+), {}, animation$
 
 
 enqueueAnimation = (animation, func) ->

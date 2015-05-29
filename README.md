@@ -6,7 +6,6 @@ Every React view ought to be pure. There is a global `app.state` which is used t
 
 # To Do
 
-- animator: initialized dynamically, busy counter.
 -list subscription and rendering without animation.
 -list hero animation - animate textAlign center? animate fontSize?
 -animation queuing
