@@ -22,7 +22,7 @@ callDelayUndoCancel = (ms, func) ->
     else
       Meteor.clearTimeout(id)
 
-insertBeforeWhere = (insert, where, list) ->
+insertBeforeWhere = R.curry (insert, where, list) ->
   inserted = false
   newList = R.reduce( ((acc,item) ->
     if where(item)

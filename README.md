@@ -6,9 +6,7 @@ Every React view ought to be pure. There is a global `app.state` which is used t
 
 # To Do
 
-edit list title
-new item
-delete item
+delete item -- swipe!
 
 -newList
 -newItem

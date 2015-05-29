@@ -88,14 +88,12 @@ app.subscriptions.lists = new Subscription {
       list = R.merge(list, {_id:id})
       enqueueAnimation 'lists', (done) ->
         refs = listsRefs([list])
-        evolveState({lists: {lists: insertBeforeWhere(list, R.propEq('_id', before), app.state.lists.lists)}})
+        evolveState({lists: {lists: insertBeforeWhere(list, R.propEq('_id', before))}})
         render ->
           # set opacity 0
           hideRefs(refs) 
           # animate height from 0 to 100 percent assuming its hidden
-          animate refs, {height:['100%', '0%']}, {}, -> 
-            # then slide it in nicely
-            animate refs, 'transition.fadeIn', {}, done
+          animate refs, 'transition.fadeIn', {}, done
     changed: (id, fields) ->
       enqueueAnimation 'lists', (done) ->
         refs =  R.map(R.concat("lists.#{id}."), R.keys(fields))

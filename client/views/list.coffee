@@ -27,6 +27,7 @@ app.views.item = React.createClassFactory
 app.views.list = React.createClassFactory
   displayName: 'List'
   mixins: [
+    React.addons.LinkedStateMixin
     React.addons.PureRenderMixin
     RegisterRefMixin('list')
   ]
@@ -35,18 +36,56 @@ app.views.list = React.createClassFactory
     list: React.PropTypes.object.isRequired
     items: React.PropTypes.array.isRequired
   
+  getInitialState: ->
+    newItem: ''
+    title: this.props.list.title or ''
+
+  componentWillReceiveProps: (props) ->
+    if props.list.title
+      @setState({title:props.list.title})
+
   renderItem: (listItem) ->
     {item} = app.views
     (item {item: listItem, key:listItem._id, ref: listItem._id})
 
+  handleTitleTabOrReturn: (e) ->
+    if e.key is "Tab" or e.key is "Enter"
+      e.preventDefault()
+      $ref('list.title').blur()
+
+  setTitle: ->
+    if @state.title isnt @props.list.title
+      updateState({list:{list:{title:@state.title}}})
+      Meteor.call('setListTitle', @props.list._id, @state.title)
+
+  handleItemTabOrReturn: (e) ->
+    if e.key is "Tab" or e.key is "Enter"
+      e.preventDefault()
+      $ref('list.newItem').blur()
+
+  submitNewItem: () ->
+    if @state.newItem.length > 0
+      app.controller.list.newItem(@state.newItem)
+      @setState({newItem:''})
+
+
   render: ->
-    {div} = React.DOM
+    {div, input} = React.DOM
     
     (div {className: 'body'},
       (div {className: 'header', ref: 'header'},
         (div {className: 'left back', onClick: app.controller.list.segueToLists}, "back")
-        (div {className: 'title'}, this.props.list.title)
+        (input {
+          type:'text'
+          ref: 'title'
+          className: 'title'
+          valueLink: @linkState('title'), 
+          placeholder:'todo list title', 
+          onBlur: @setTitle, 
+          onKeyDown:@handleTitleTabOrReturn
+        })
       )
+      (input {type:'text', className: 'new-item', ref:'newItem', valueLink: @linkState('newItem'), placeholder:'new todo item', onBlur: @submitNewItem, onKeyDown:@handleItemTabOrReturn})
       R.map(@renderItem, @props.items)
       do =>
         if this.props.isLoading
@@ -82,7 +121,7 @@ createListSubscription = (listId) ->
           newItems = differenceWhere(R.prop('_id'), items, app.state.list.items)
           updateState({list: {items: items}})
           render ->
-            animate(listRefs(newItems), 'transition.slideUpIn', {}, done)
+            animate(listRefs(newItems), 'transition.slideUpIn', {stagger:50}, done)
 
       addedBefore: (id, item, before) ->
         item = R.merge(item, {_id:id})
@@ -93,9 +132,7 @@ createListSubscription = (listId) ->
             # set opacity 0
             hideRefs(refs) 
             # animate height from 0 to 100 percent assuming its hidden
-            animate refs, {height:['100%', '0%']}, -> 
-              # then slide it in nicely
-              animate refs, 'transition.fadeIn', {}, done
+            animate refs, 'transition.fadeIn', {}, done
       changed: (id, fields) ->
         enqueueAnimation 'list', (done) ->
           refs =  R.map(R.concat("list.#{id}."), R.keys(fields))
@@ -136,7 +173,7 @@ createListSubscription = (listId) ->
             done()
       addedBefore: (id, item, before) ->
       changed: (id, fields) ->
-        if fields.title
+        if fields.title and (fields.title isnt app.state.list.list.title)
           enqueueAnimation 'list', (done) ->
             animateOut = (next) ->
               animate ['list.title'], 'transition.fadeOut', {}, next
@@ -200,5 +237,7 @@ app.controller.list = {
         FlowRouter.go('/')
         app.animations.lists.appear(done)
 
-  toggleItem: (itemId) ->
+  newItem: (title) ->
+    listId = app.state.list.list._id    
+    Meteor.call('newItem', listId, title)
 }
