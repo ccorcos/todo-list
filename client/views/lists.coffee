@@ -88,7 +88,7 @@ app.subscriptions.lists = new Subscription {
       list = R.merge(list, {_id:id})
       enqueueAnimation 'lists', (done) ->
         refs = listsRefs([list])
-        evolveState({lists: {lists: insertBeforeWhere(list, R.propEq('_id', before))}})
+        evolveState({lists: {lists: insertBeforeWhere(list, R.propEq('_id', before), app.state.lists.lists)}})
         render ->
           # set opacity 0
           hideRefs(refs) 
@@ -106,7 +106,7 @@ app.subscriptions.lists = new Subscription {
     removed: (id) ->
       # remove a document
       enqueueAnimation 'lists', (done) ->
-        animate listsRefs([id]), {height:['100%', '0%'], opacity: 0}, -> 
+        animate listsRefs([{_id: id}]), {height:0, opacity:0}, {}, -> 
           evolveState({lists: {lists: R.filter(R.complement(R.propEq('_id', id)))}})
           render(done)
   }],
@@ -120,7 +120,7 @@ app.subscriptions.lists = new Subscription {
 }
 
 # initial state
-updateState({lists:{isLoading:false, lists:[]}})
+initialState({lists:{isLoading:false, lists:[]}})
 
 app.animations.lists = {
   appear: (done) ->
@@ -139,7 +139,8 @@ app.controller.lists = {
   segueToLogout: ->
     enqueueAnimation 'transition', (done) ->
       # stop all subscription now
-      R.map(R.invoke('reset', []), app.subscriptions)
+      app.resetSubscriptions()
+      app.resetState()
       Meteor.logout()
       animate ['lists'], 'transition.fadeOut', {}, ->
         app.animations.welcome.appear(done)
@@ -150,8 +151,9 @@ app.controller.lists = {
     enqueueAnimation 'transition', (done) ->
       # stop all subscription now
       app.subscriptions.lists.stop()
-      updateState({list:{list:{title:R.find(R.propEq('_id', listId), app.state.lists.lists)?.title}}})
+      updateState({list:{list: R.find(R.propEq('_id', listId), app.state.lists.lists), items:Items.find({listId}).fetch()}})
       animate ['lists'], 'transition.fadeOut', {}, ->
+        FlowRouter.go("/list/#{listId}")
         app.animations.list.appear(listId, done)
 
 }

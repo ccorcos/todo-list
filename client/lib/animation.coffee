@@ -17,9 +17,11 @@ lookupDOMNodes = R.compose(R.map(getDOMNode), R.filter(R.complement(R.isNil)), R
 $refs = R.compose($, lookupDOMNodes)
 
 # animate refs using $.velocity
-animate = R.curry (refNames, transition, options, complete) ->
+animate = (refNames, transition, options, complete) ->
   unless _.isFunction(complete)
     console.warn "animation with no callback", arguments
+    complete()
+    return
   options = R.merge({display:null, complete}, options)
   $elements = $refs(refNames)
   if $elements.length > 0

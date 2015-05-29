@@ -125,6 +125,8 @@ app.animations.welcome = {
     ], 'transition.fadeOut', {}, done)
 }
 
+initialState({welcome:{scene:'username', error:''}})
+
 app.controller.welcome = 
   appear: -> 
     enqueueAnimation('appear', app.animations.welcome.appear)
@@ -326,4 +328,5 @@ app.controller.welcome =
   segueToLists: ->
     enqueueAnimation 'transition', (done) ->
       app.animations.welcome.disappear ->
+        FlowRouter.go('/')
         app.animations.lists.appear(done)

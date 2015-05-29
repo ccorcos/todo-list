@@ -18,15 +18,21 @@ logoutRequired = (path, next) ->
 FlowRouter.route '/welcome', 
   middlewares: [logoutRequired]
   action: (params, queryParams) ->
-    start -> app.controller.welcome.appear()
+    start -> 
+      app.resetState()
+      app.controller.welcome.appear()
 
 FlowRouter.route '/', 
   middlewares: [loginRequired]
   action: (params, queryParams) ->
-    start -> app.controller.lists.appear()
+    start -> 
+      app.resetState()
+      app.controller.lists.appear()
 
 FlowRouter.route '/list/:_id', 
   middlewares: [loginRequired]
   action: (params, queryParams) ->
-    start -> app.controller.list.appear(params._id)
+    start -> 
+      app.resetState()
+      app.controller.list.appear(params._id)
 

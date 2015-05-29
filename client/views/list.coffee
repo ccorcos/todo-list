@@ -14,7 +14,13 @@ app.views.item = React.createClassFactory
         className: 'list-item', 
       },
       (div {className: 'title', ref:'title'}, this.props.item.title)
-      (input {type: 'checkbox', ref:'checked', checked:this.props.item.checked})
+      (input {
+        type: 'checkbox', 
+        ref:'checked',
+        checked:this.props.item.checked
+        onChange: (e) =>
+          Meteor.call('setItemChecked', this.props.item._id, e.target.checked)
+      })
     )
 
 # the feed page. just a list of events
@@ -73,10 +79,11 @@ createListSubscription = (listId) ->
         # animate initial events in
         enqueueAnimation 'list', (done) ->
           # only animate in the new events
-          newItems = R.difference(items, app.state.list.items)
+          newItems = differenceWhere(R.prop('_id'), items, app.state.list.items)
           updateState({list: {items: items}})
           render ->
-            animate(listRefs(newItems), 'transition.slideUpIn', done)
+            animate(listRefs(newItems), 'transition.slideUpIn', {}, done)
+
       addedBefore: (id, item, before) ->
         item = R.merge(item, {_id:id})
         enqueueAnimation 'list', (done) ->
@@ -92,10 +99,10 @@ createListSubscription = (listId) ->
       changed: (id, fields) ->
         enqueueAnimation 'list', (done) ->
           refs =  R.map(R.concat("list.#{id}."), R.keys(fields))
-          animate refs, 'transition.fadeOut', {}, ->
-            evolveState({list: {items: evolveWhere(R.propEq('_id', id), R.merge(fields))}})
+          animate refs, 'transition.slideRightOut', {duration:100}, ->
+            evolveState({list: {items: updateWhere(R.propEq('_id', id), R.merge(R.__, fields))}})
             render ->
-              animate refs, 'transition.fadeIn', done
+              animate(refs, 'transition.slideLeftIn', {duration:100}, done)
       removed: (id) ->
         # remove a document
         enqueueAnimation 'list', (done) ->
@@ -115,16 +122,18 @@ createListSubscription = (listId) ->
           animateIn = (next) ->
             animate ['list.title'], 'transition.fadeIn', {}, next
 
-          if app.state.list.title isnt list.title
-            if app.state.list.title
+          if app.state.list.list.title isnt list.title
+            if app.state.list.list.title
               animateOut ->
-                updateState({list: {title: list.title}})
+                updateState({list: {list: list}})
                 render ->
                   animateIn(done)
             else
-              updateState({list: {title: list.title}})
+              updateState({list: {list: list}})
               render ->
                 animateIn(done)
+          else
+            done()
       addedBefore: (id, item, before) ->
       changed: (id, fields) ->
         if fields.title
@@ -135,10 +144,9 @@ createListSubscription = (listId) ->
               animate ['list.title'], 'transition.fadeIn', {}, next
             
             animateOut ->
-              updateState({list: {title: fields.title}})
+              updateState({list: {list: {title: fields.title}}})
               render ->
                 animateIn(done)
-
       removed: (id) ->
     }]
 
@@ -158,6 +166,9 @@ app.subscriptions.list = {
   stop: ->
     @current?.stop?()
     @current = null
+    updateState({
+      list: {list:{}, items:[]}  
+    })
   reset: ->
     R.map(R.invoke('reset', []), R.values(@cache))
     @cache = {}
@@ -165,14 +176,16 @@ app.subscriptions.list = {
 }
 
 # initial state
-updateState({list:{isLoading:false, list:{}, items:[]}})
+initialState({list:{isLoading:false, list:{}, items:[]}})
   
 app.animations.list = {
   appear: R.curry (listId, done) ->
     app.subscriptions.list.start(listId)
     updateState({route:'list', list:{isLoading:false}})
     render ->
-      animate(['list.header'], 'transition.fadeIn', {}, done)
+      complete = nthCallOf(2, done)
+      animate(['list.header'], 'transition.fadeIn', {}, complete)
+      animate(listRefs(app.state.list.items), 'transition.fadeIn', {}, complete)
 }
 
 app.controller.list = {
@@ -184,6 +197,7 @@ app.controller.list = {
       # stop all subscription now
       app.subscriptions.list.stop()
       animate ['list'], 'transition.fadeOut', {}, ->
+        FlowRouter.go('/')
         app.animations.lists.appear(done)
 
   toggleItem: (itemId) ->

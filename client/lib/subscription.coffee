@@ -1,21 +1,10 @@
 
 
-insertBeforeWhere = (insert, where, list) ->
-  inserted = false
-  newList = R.reduce( ((acc,item) ->
-    if where(item)
-      inserted = true
-      return R.concat(acc, [insert, item])
-    else
-      return R.concat(acc, [item])
-  ), [], list)
-  unless inserted
-    newList = R.append(insert, list)
-  return newList
+
 
 observeChanges = (cursor, callbacks) ->
-  first = true
   initialDocs = []
+  first = true
   handle = cursor.observeChanges 
     addedBefore: (id, fields, before) ->
       if first
@@ -40,7 +29,8 @@ callMethod = R.curry (name, obj) ->
 class Subscription
   constructor: (obj) ->
     _.extend(this, obj,{
-      handles: []
+      observers: []
+      subs: []
       timeout: null
     })
   reset: ->
@@ -48,22 +38,35 @@ class Subscription
     @onReset?()
     R.map(callMethod('onReset'), @cursors)
   stopHandles: ->
-    R.map(R.invoke('stop', []), @handles)
-    @handles = []
+    R.map(R.invoke('stop', []), @observers)
+    R.map(R.invoke('stop', []), @subs)
+    @subs = []
+    @observers = []
   stop: ->
     @timeout = Meteor.setTimeout(@reset.bind(this), 1000*60*2)
     @onStop?()
+    R.map(R.invoke('stop', []), @observers)
     R.map(callMethod('onStop'), @cursors)
   start: ->
     @onStart?()
     R.map(callMethod('onStart'), @cursors)
     Meteor.clearTimeout(@timeout)
-    undo = callDelayUndoCancel(100, @startLoading)
-    # subscribe to data from the server
-    @handles.push @subscribe =>
-      undo(@stopLoading)
+    # start sub if it hasnt been or restart cursors
+    if @subs.length is 0
+      undo = callDelayUndoCancel(100, @startLoading)
+      # subscribe to data from the server
+      @subs.push @subscribe =>
+        undo(@stopLoading)
+        # reactively watch for events and animate the UI accordingly
+        for cursor in @cursors
+          @observers.push observeChanges(cursor.cursor(), R.pick(['initial', 'addedBefore', 'changed', 'removed'], cursor))
+    else
       # reactively watch for events and animate the UI accordingly
       for cursor in @cursors
-        @handles.push observeChanges(cursor.cursor(), R.pick(['initial', 'addedBefore', 'changed', 'removed'], cursor))
+        @observers.push observeChanges(cursor.cursor(), R.pick(['initial', 'addedBefore', 'changed', 'removed'], cursor))
 
-_.extend(this, {insertBeforeWhere, Subscription})
+
+app.resetSubscriptions = ->
+  R.map(R.invoke('reset', []), R.values(app.subscriptions))
+
+_.extend(this, {Subscription})

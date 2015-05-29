@@ -11,41 +11,25 @@ App = React.createClassFactory
 render = (done) ->
   React.render(App(app.state), document.body, done)
 
-extend = (dest, obj) ->
-  for k,v of obj
-    if _.isPlainObject(v)
-      unless dest[k]
-        dest[k] = {}
-      # recursively extend nested objects
-      extend(dest[k], v)
-    else
-      dest[k] = v
+updateState = (obj) ->
+  app.state = R.clone(app.state)
+  extend(app.state, obj)
 
-updateState = R.curry(extend)(app.state)
+evolveState = (obj) ->
+  app.state = R.clone(app.state)
+  evolve(app.state, obj)
 
-evolve = (dest, obj) ->
-  for k,v of obj
-    if _.isPlainObject(v)
-      unless dest[k]
-        dest[k] = {}
-      # recursively extend nested objects
-      evolve(dest[k], v)
-    else if _.isFunction(v)
-      dest[k] = v(dest[k])
-    else
-      dest[k] = v
+initialStates = []
+initialState = (obj) ->
+  initialStates.push(obj)
 
-evolveState = R.curry(evolve)(app.state)
+app.resetState = ->
+  app.state = R.reduce(extend, {}, initialStates)
 
-evolveWhere = R.curry (where, evolve, list) ->
-  R.map(R.cond([
-    [where, evolve]
-    [R.T, R.identity]
-  ]), list)
 
 _.extend(this, {
   render
   updateState
   evolveState
-  evolveWhere
+  initialState
 })

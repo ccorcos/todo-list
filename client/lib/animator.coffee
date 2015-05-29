@@ -84,7 +84,6 @@ log = (value) ->
 
 handleAction = R.compose(
   R.identity
-  log
   initializeAnimationState
 )
 
