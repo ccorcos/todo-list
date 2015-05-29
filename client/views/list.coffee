@@ -8,6 +8,8 @@ app.views.item = React.createClassFactory
     item: React.PropTypes.object.isRequired
   
   render: ->
+    {div, input} = React.DOM
+
     (div {
         className: 'list-item', 
       },
@@ -27,9 +29,9 @@ app.views.list = React.createClassFactory
     list: React.PropTypes.object.isRequired
     items: React.PropTypes.array.isRequired
   
-  renderItem: (item) ->
+  renderItem: (listItem) ->
     {item} = app.views
-    (item {item})
+    (item {item: listItem, key:listItem._id, ref: listItem._id})
 
   render: ->
     {div} = React.DOM
@@ -53,7 +55,7 @@ listRefs = R.map(R.compose(
 createListSubscription = (listId) ->
   new Subscription 
     subscribe: (onReady) ->
-      Meteor.subscribe('list', onReady)
+      Meteor.subscribe('list', listId, onReady)
     startLoading: ->
       enqueueAnimation 'list', (done) ->
         updateState({list: {isLoading: true}})
@@ -150,6 +152,7 @@ app.subscriptions.list = {
       @current = sub
     else
       sub = createListSubscription(listId)
+      sub.start()
       @cache[listId] = sub
       @current = sub
   stop: ->

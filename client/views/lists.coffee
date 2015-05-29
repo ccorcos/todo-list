@@ -128,7 +128,7 @@ app.animations.lists = {
     updateState({route:'lists', lists:{isLoading:false}})
     render ->
       complete = nthCallOf(2, done)
-      animate(['lists.header'], 'transition.slideDownIn', {}, complete)
+      animate(['lists.header'], 'transition.fadeIn', {}, complete)
       animate(listsRefs(app.state.lists.lists), 'transition.fadeIn', {}, complete)
 }
 

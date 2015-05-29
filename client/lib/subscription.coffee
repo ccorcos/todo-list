@@ -64,6 +64,6 @@ class Subscription
       undo(@stopLoading)
       # reactively watch for events and animate the UI accordingly
       for cursor in @cursors
-        @handles.push observeChanges(cursor.cursor(), R.pick(['initial', 'added', 'changed', 'removed'], cursor))
+        @handles.push observeChanges(cursor.cursor(), R.pick(['initial', 'addedBefore', 'changed', 'removed'], cursor))
 
 _.extend(this, {insertBeforeWhere, Subscription})
