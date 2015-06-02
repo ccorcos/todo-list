@@ -6,15 +6,28 @@ Every React view ought to be pure. There is a global `app.state` which is used t
 
 # To Do
 
-delete item -- swipe!
-
+delete item -- swipe with flyd?
 -newList
--newItem
 -deleteList
 -deleteItem
--editList
--editItem
--use flyd for swipe actions?
-
 -list hero animation - animate textAlign center? animate fontSize?
 -animation queuing
+-hero animation from lists to list
+
+refactor:
+- animate only if there was a change
+
+# Separation of Concerns
+
+subscription:
+- subscribe to something
+- watch some cursors and animate changes
+- update the subscription when necessary
+
+view:
+- pure render with React
+- call actions in the controller or the subscription
+
+controller:
+- handle all actions that have to do with animation, changing UI, or changing state
+- everything except data from a subscription
